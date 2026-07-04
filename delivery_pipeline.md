@@ -46,11 +46,29 @@ Backend delivery:
 - Packages the backend folder into `backend-package.tar.gz`.
 - Uploads the backend package as a GitHub Actions artifact named `backend-package`.
 
-## Future Deployment Extension
+## Railway Delivery
 
-No production hosting target has been defined yet. When a deployment target is selected, the delivery workflow can be extended with deployment steps for:
+Railway should be used as the delivery platform for deploying the application after the CI workflow succeeds.
 
-- Static hosting for the React frontend.
-- A Python web service host for the FastAPI backend.
-- Environment variable configuration for API keys and database settings.
-- Database migration or dataset import steps.
+Railway delivery responsibilities:
+
+- Deploy the FastAPI backend as a Python web service.
+- Deploy or connect the React frontend build to the selected frontend hosting setup.
+- Configure environment variables for API keys, dataset paths, database URLs, and service settings.
+- Run the backend using the production command required by Railway, such as `uvicorn app.main:app --host 0.0.0.0 --port $PORT`.
+- Use Railway service health checks to verify that the backend is available through `/api/health`.
+- Support future database provisioning and dataset import steps through Railway services or environment configuration.
+
+The GitHub Actions delivery workflow can continue to build and package artifacts, while Railway handles the final hosted deployment process.
+
+## Scaling and Availability
+
+Deployment should account for multiple concurrent users and multi-agent workloads. The backend should run as multiple FastAPI instances behind a load balancer so traffic can continue if one instance becomes unhealthy.
+
+The scaling strategy is defined in `deployment_scaling.md` and includes:
+
+- Horizontal backend scaling.
+- Load balancing with Nginx.
+- Health checks for backend containers.
+- Multi-agent workload considerations.
+- Rolling deployment and downtime reduction practices.
