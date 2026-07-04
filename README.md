@@ -15,6 +15,8 @@ Built on the [Montréal open dataset of public places and buildings](https://don
 
 The backend implements the four-layer architecture from `architecture.md`:
 
+![EzAccess layered architecture](docs/assets/ezaccess-architecture-layers.png)
+
 ```
 Presentation (React UI + REST API boundary)
       │

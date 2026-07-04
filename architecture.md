@@ -13,7 +13,7 @@ This architecture separates the user interface, voice and text interaction, busi
 
 ## Architecture Diagram
 
-Layered architecture diagram
+![EzAccess layered architecture](docs/assets/ezaccess-architecture-layers.png)
 
 The diagram shows the application organized into four layers. The Presentation Layer handles user interaction, including text input, voice input, map interaction, text output, and voice output. The Business Layer contains the application logic for user requests, recommendations, summaries, translation, and voice processing. The Persistence Layer models and retrieves the dataset records. The Database Layer stores the structured public service location data.
 
