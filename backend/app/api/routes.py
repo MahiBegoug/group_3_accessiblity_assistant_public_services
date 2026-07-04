@@ -73,6 +73,12 @@ def languages() -> dict:
     return {"languages": translation_service.SUPPORTED_LANGUAGES}
 
 
+@router.get("/agents")
+def agents() -> dict:
+    """Describe the Business Layer multi-agent system."""
+    return {"agents": _handler().agents()}
+
+
 @router.get("/places/{place_id}")
 def get_place(place_id: str) -> dict:
     repo = get_repository()

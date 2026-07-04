@@ -4,6 +4,7 @@ import { ChatPanel } from "./components/ChatPanel";
 import { Header } from "./components/Header";
 import { MapView } from "./components/MapView";
 import { ResultsPanel } from "./components/ResultsPanel";
+import { SpeakingBar } from "./components/SpeakingBar";
 import { useSpeechSynthesis } from "./hooks/useSpeechSynthesis";
 import type {
   Bounds,
@@ -57,7 +58,15 @@ export default function App() {
   const [languages, setLanguages] = useState<LanguageMap>({});
   const [placeCount, setPlaceCount] = useState(0);
 
-  const { supported: canSpeak, speak } = useSpeechSynthesis();
+  const {
+    supported: canSpeak,
+    speaking,
+    speak,
+    cancel,
+    voices,
+    voiceURI,
+    setVoiceURI,
+  } = useSpeechSynthesis();
   const languageRef = useRef(language);
   languageRef.current = language;
 
@@ -70,6 +79,15 @@ export default function App() {
 
   const speakReply = useCallback(
     (text: string) => speak(text, BCP47[languageRef.current] ?? "en-US"),
+    [speak]
+  );
+
+  const previewVoice = useCallback(
+    () =>
+      speak(
+        "Hi, I'm EzAccess. This is how I'll read results aloud.",
+        BCP47[languageRef.current] ?? "en-US"
+      ),
     [speak]
   );
 
@@ -97,7 +115,13 @@ export default function App() {
         setMessages((prev) =>
           prev.map((m) =>
             m.id === pendingId
-              ? { id: m.id, role: "assistant", text: res.reply, intent: res.intent }
+              ? {
+                  id: m.id,
+                  role: "assistant",
+                  text: res.reply,
+                  intent: res.intent,
+                  agents: res.agentsUsed,
+                }
               : m
           )
         );
@@ -151,6 +175,10 @@ export default function App() {
         voiceOutput={voiceOutput}
         onVoiceOutputChange={setVoiceOutput}
         placeCount={placeCount}
+        voices={voices}
+        voiceURI={voiceURI}
+        onVoiceChange={setVoiceURI}
+        onVoicePreview={previewVoice}
       />
 
       <main className="main">
@@ -160,8 +188,10 @@ export default function App() {
           busy={busy}
           recognitionLang={recognitionLang}
           canSpeak={canSpeak}
+          speaking={speaking}
           onSend={handleSend}
           onSpeak={speakReply}
+          onStopSpeaking={cancel}
         />
 
         <div className="right">
@@ -177,9 +207,13 @@ export default function App() {
             onSelect={handleSelectPlace}
             onSpeak={speakReply}
             canSpeak={canSpeak}
+            speaking={speaking}
+            onStopSpeaking={cancel}
           />
         </div>
       </main>
+
+      <SpeakingBar speaking={speaking} onStop={cancel} />
     </div>
   );
 }

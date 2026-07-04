@@ -51,6 +51,7 @@ export interface ChatResponse {
   bounds: Bounds | null;
   translation: Record<string, unknown> | null;
   suggestions: string[];
+  agentsUsed: string[];
 }
 
 export interface ChatMessage {
@@ -59,6 +60,7 @@ export interface ChatMessage {
   text: string;
   intent?: string;
   source?: "text" | "voice";
+  agents?: string[];
   pending?: boolean;
 }
 

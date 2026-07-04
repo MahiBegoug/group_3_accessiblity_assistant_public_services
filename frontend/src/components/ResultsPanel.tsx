@@ -8,6 +8,8 @@ interface ResultsPanelProps {
   onSelect: (place: Place) => void;
   onSpeak: (text: string) => void;
   canSpeak: boolean;
+  speaking: boolean;
+  onStopSpeaking: () => void;
 }
 
 export function ResultsPanel({
@@ -16,6 +18,8 @@ export function ResultsPanel({
   onSelect,
   onSpeak,
   canSpeak,
+  speaking,
+  onStopSpeaking,
 }: ResultsPanelProps) {
   return (
     <section className="panel results" aria-label="Places found">
@@ -47,6 +51,8 @@ export function ResultsPanel({
                 onSelect={onSelect}
                 onSpeak={onSpeak}
                 canSpeak={canSpeak}
+                speaking={speaking}
+                onStopSpeaking={onStopSpeaking}
               />
             ))}
           </AnimatePresence>

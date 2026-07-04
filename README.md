@@ -18,9 +18,12 @@ The backend implements the four-layer architecture from `architecture.md`:
 ```
 Presentation (React UI + REST API boundary)
       │
-Business Layer      backend/app/business/   intent, shared request handler,
-                                            recommendations, summaries,
-                                            translation, map preparation
+Business Layer      backend/app/business/   intent + shared request handler
+  └─ Multi-Agent    backend/app/business/agents/
+     System           AgentCoordinator routes each request to:
+                        • RecommenderAgent  (search / activity recommendations)
+                        • SummaryAgent      (concise place summaries)
+                        • TranslatorAgent   (translate replies / place info)
       │
 Persistence Layer   backend/app/persistence/ Place model, CSV loader, repository
       │
@@ -29,6 +32,16 @@ Database Layer      dataset/lieux-en.csv     Montréal public places dataset
 
 Text and voice share **one workflow**: voice is transcribed to text in the browser,
 then processed exactly like typed input by the Business Layer.
+
+### Multi-agent system
+
+The Business Layer is organized as a multi-agent system. The `AgentCoordinator`
+decides which agent handles each request and **chains agents when needed** — for
+example, "recommend a park in French" runs the Recommender Agent, then the
+Translator Agent. Every agent shares the same dataset access (the Persistence
+Layer repository) and returns a common `AgentResult`, which the coordinator merges
+into one unified response for text, voice, and map output. Each chat response
+reports which agents participated (`agentsUsed`), shown as chips in the UI.
 
 ---
 
@@ -121,11 +134,15 @@ To build for production: `npm run build` then `npm run preview`.
 | ------------------------------ | --------------------------------------------------------------------- |
 | Text communication             | Chat panel + `POST /api/chat`                                         |
 | Voice communication            | Browser Speech Recognition (`useSpeechRecognition`) → shared `/chat` |
-| Text & voice output            | On-screen text + "Read aloud" (`useSpeechSynthesis`, Web Speech TTS)  |
+| Text & voice output            | On-screen text + "Read aloud" + selectable TTS voice (`useSpeechSynthesis`) |
 | Interactive map                | Leaflet map with markers, popups, and fly-to on selection            |
-| Place summaries                | `business/summary_service.py`, shown on cards, map popups, and chat  |
-| Text translation               | `business/translation_service.py` + `POST /api/translate`            |
-| Activity-based recommendations | `business/recommendation_service.py` (intent → `recommend`)          |
+| Place summaries                | `agents/summary_agent.py`, shown on cards, map popups, and chat      |
+| Text translation               | `agents/translator_agent.py` + `POST /api/translate`                 |
+| Activity-based recommendations | `agents/recommender_agent.py` (intent → `recommend`)                 |
+
+The voice used for spoken responses can be changed from the **voice picker** in
+the header (with a preview button); it defaults to the most natural-sounding
+voice available for the selected language.
 
 ### Try it
 
@@ -148,6 +165,7 @@ To build for production: `npm run build` then `npm run preview`.
 | GET    | `/api/places/{id}`  | A single place with a full summary            |
 | GET    | `/api/metadata`     | Boroughs, categories, dataset info            |
 | GET    | `/api/languages`    | Supported translation languages               |
+| GET    | `/api/agents`       | Describes the Business Layer agents           |
 | GET    | `/api/health`       | Service + dataset status                      |
 
 ---

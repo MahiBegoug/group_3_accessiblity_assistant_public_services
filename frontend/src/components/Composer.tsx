@@ -1,7 +1,8 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
 import { useSpeechRecognition } from "../hooks/useSpeechRecognition";
-import { MicIcon, SendIcon } from "./icons";
+import { MicIcon, SendIcon, StopIcon } from "./icons";
+import { TranscriptPreview } from "./TranscriptPreview";
 
 interface ComposerProps {
   onSend: (text: string, source: "text" | "voice") => void;
@@ -13,29 +14,33 @@ export function Composer({ onSend, disabled, recognitionLang }: ComposerProps) {
   const [value, setValue] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const wasListening = useRef(false);
-  const { supported, listening, transcript, interim, start, stop, reset } =
+  // Holds the latest live text shown while listening, used as the send source
+  // so nothing is lost if the final transcript event doesn't fire.
+  const lastLiveRef = useRef("");
+  const { supported, listening, transcript, interim, error, start, stop, reset } =
     useSpeechRecognition(recognitionLang);
 
-  // Mirror the live transcript into the input while listening.
+  // Track the live transcript for sending (shown in the preview, not the input).
   useEffect(() => {
     if (listening) {
-      const live = [transcript, interim].filter(Boolean).join(" ");
-      if (live) setValue(live);
+      lastLiveRef.current = [transcript, interim].filter(Boolean).join(" ").trim();
     }
   }, [transcript, interim, listening]);
 
-  // When listening stops, auto-send the captured voice input.
+  // When listening stops, auto-send whatever was captured.
   useEffect(() => {
     if (wasListening.current && !listening) {
-      const finalText = transcript.trim();
-      if (finalText) {
-        onSend(finalText, "voice");
-        setValue("");
-        reset();
-      }
+      const finalText = (lastLiveRef.current || transcript).trim();
+      if (finalText) onSend(finalText, "voice");
+      setValue("");
+      lastLiveRef.current = "";
+      reset();
+      if (textareaRef.current) textareaRef.current.style.height = "auto";
     }
     wasListening.current = listening;
-  }, [listening, transcript, onSend, reset]);
+    // Intentionally only react to the listening flag flipping.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [listening]);
 
   const autoGrow = () => {
     const el = textareaRef.current;
@@ -45,8 +50,14 @@ export function Composer({ onSend, disabled, recognitionLang }: ComposerProps) {
   };
 
   const submit = () => {
+    if (disabled) return;
+    // If we're capturing voice, stop first — the stop effect sends the text.
+    if (listening) {
+      stop();
+      return;
+    }
     const text = value.trim();
-    if (!text || disabled) return;
+    if (!text) return;
     onSend(text, "text");
     setValue("");
     if (textareaRef.current) textareaRef.current.style.height = "auto";
@@ -64,19 +75,28 @@ export function Composer({ onSend, disabled, recognitionLang }: ComposerProps) {
     else start();
   };
 
+  const sendDisabled = disabled || (!listening && !value.trim());
+
   return (
-    <div className="composer">
+    <>
+      <AnimatePresence>
+        {listening && (
+          <TranscriptPreview transcript={transcript} interim={interim} />
+        )}
+      </AnimatePresence>
+      <div className="composer">
       {supported && (
         <div style={{ position: "relative" }}>
           <button
             type="button"
             className={`icon-btn icon-btn--mic ${listening ? "listening" : ""}`}
             onClick={toggleMic}
-            aria-label={listening ? "Stop voice input" : "Start voice input"}
+            aria-label={listening ? "Stop listening" : "Start voice input"}
             aria-pressed={listening}
+            title={listening ? "Stop listening" : "Speak"}
             disabled={disabled}
           >
-            <MicIcon size={20} />
+            {listening ? <StopIcon size={18} /> : <MicIcon size={20} />}
           </button>
           <AnimatePresence>
             {listening && (
@@ -98,7 +118,11 @@ export function Composer({ onSend, disabled, recognitionLang }: ComposerProps) {
           rows={1}
           value={value}
           placeholder={
-            listening ? "Listening…" : "Ask or say what you're looking for…"
+            listening
+              ? "Listening… tap the stop button or Send when you're done"
+              : error
+                ? "Voice input needs microphone access — you can type instead"
+                : "Ask or say what you're looking for…"
           }
           onChange={(event) => {
             setValue(event.target.value);
@@ -114,12 +138,14 @@ export function Composer({ onSend, disabled, recognitionLang }: ComposerProps) {
         type="button"
         className="icon-btn icon-btn--send"
         onClick={submit}
-        disabled={!value.trim() || disabled}
+        disabled={sendDisabled}
         whileTap={{ scale: 0.9 }}
-        aria-label="Send message"
+        aria-label={listening ? "Stop and send" : "Send message"}
+        title={listening ? "Stop and send" : "Send"}
       >
         <SendIcon size={19} />
       </motion.button>
-    </div>
+      </div>
+    </>
   );
 }

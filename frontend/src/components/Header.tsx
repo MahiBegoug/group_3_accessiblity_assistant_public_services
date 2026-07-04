@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import type { LanguageMap } from "../types";
 import { LanguageSelect } from "./LanguageSelect";
 import { Toggle } from "./Toggle";
+import { VoiceSelect } from "./VoiceSelect";
 
 interface HeaderProps {
   languages: LanguageMap;
@@ -10,6 +11,10 @@ interface HeaderProps {
   voiceOutput: boolean;
   onVoiceOutputChange: (value: boolean) => void;
   placeCount: number;
+  voices: SpeechSynthesisVoice[];
+  voiceURI: string | null;
+  onVoiceChange: (uri: string | null) => void;
+  onVoicePreview: () => void;
 }
 
 export function Header({
@@ -19,6 +24,10 @@ export function Header({
   voiceOutput,
   onVoiceOutputChange,
   placeCount,
+  voices,
+  voiceURI,
+  onVoiceChange,
+  onVoicePreview,
 }: HeaderProps) {
   return (
     <motion.header
@@ -50,6 +59,12 @@ export function Header({
           label="Read aloud"
           checked={voiceOutput}
           onChange={onVoiceOutputChange}
+        />
+        <VoiceSelect
+          voices={voices}
+          voiceURI={voiceURI}
+          onChange={onVoiceChange}
+          onPreview={onVoicePreview}
         />
         <LanguageSelect
           languages={languages}
