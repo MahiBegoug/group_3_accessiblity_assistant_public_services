@@ -13,37 +13,9 @@ This architecture separates the user interface, voice and text interaction, busi
 
 ## Architecture Diagram
 
-```text
-+--------------------------------------------------+
-|                Presentation Layer                |
-|  User interface, text input, voice input, map UI  |
-|  text output, voice output, speech controls,      |
-|  translations, summaries, recommendations         |
-+-------------------------+------------------------+
-                          |
-                          v
-+--------------------------------------------------+
-|                  Business Layer                  |
-|  Shared request handling for text and voice,      |
-|  recommendations, summaries, translation flow,    |
-|  speech-to-text/text-to-speech coordination,      |
-|  map result preparation, accessibility behavior   |
-+-------------------------+------------------------+
-                          |
-                          v
-+--------------------------------------------------+
-|                 Persistence Layer                |
-|  Dataset model, CSV parsing, place entities,      |
-|  repositories, data access methods, filtering     |
-+-------------------------+------------------------+
-                          |
-                          v
-+--------------------------------------------------+
-|                   Database Layer                 |
-|  Stored public places data from the Montreal      |
-|  public buildings and places dataset              |
-+--------------------------------------------------+
-```
+![Layered architecture diagram](C:/Users/Admin/.cursor/projects/c-Users-Admin-dev-group-3-accessiblity-assistant-public-services/assets/c__Users_Admin_AppData_Roaming_Cursor_User_workspaceStorage_empty-window_images_image-a4ea655c-2941-485c-a2f9-652f2741d2f2.png)
+
+The diagram shows the application organized into four layers. The Presentation Layer handles user interaction, including text input, voice input, map interaction, text output, and voice output. The Business Layer contains the application logic for user requests, recommendations, summaries, translation, and voice processing. The Persistence Layer models and retrieves the dataset records. The Database Layer stores the structured public service location data.
 
 ## Presentation Layer
 
