@@ -37,13 +37,15 @@ export function Header({
       transition={{ type: "spring", stiffness: 260, damping: 24 }}
     >
       <div className="brand">
-        <motion.div
+        <motion.img
           className="brand__mark"
+          src="/logo-mark.png"
+          alt="EzAccess logo"
+          width={40}
+          height={40}
           whileHover={{ rotate: -8, scale: 1.06 }}
           transition={{ type: "spring", stiffness: 400, damping: 12 }}
-        >
-          Ez
-        </motion.div>
+        />
         <div>
           <div className="brand__name">EzAccess</div>
           <div className="brand__tag">
