@@ -1,0 +1,10 @@
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    image: ezaccess-backend
+    container_name: ezaccess-backend
+    ports:
+      - "8000:8000"
+    restart: unless-stopped
