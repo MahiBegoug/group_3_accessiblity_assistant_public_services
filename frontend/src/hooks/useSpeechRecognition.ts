@@ -49,42 +49,45 @@ export function useSpeechRecognition(lang = "en-US"): UseSpeechRecognitionResult
   const [error, setError] = useState<string | null>(null);
 
   const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
-  // The user explicitly asked to stop (vs. the browser auto-ending on silence).
-  const manualStopRef = useRef(false);
   const langRef = useRef(lang);
   langRef.current = lang;
 
-  // Detach handlers and drop the current instance.
-  const teardown = useCallback(() => {
+  // Fully detach handlers and drop the current instance so the next start()
+  // always begins from a clean slate (reusing an instance is unreliable).
+  const dispose = useCallback(() => {
     const recognition = recognitionRef.current;
-    if (recognition) {
-      recognition.onstart = null;
-      recognition.onresult = null;
-      recognition.onerror = null;
-      recognition.onend = null;
-      try {
-        recognition.abort();
-      } catch {
-        /* ignore */
-      }
-    }
     recognitionRef.current = null;
+    if (!recognition) return;
+    recognition.onstart = null;
+    recognition.onresult = null;
+    recognition.onerror = null;
+    recognition.onend = null;
+    try {
+      recognition.abort();
+    } catch {
+      /* ignore */
+    }
   }, []);
 
   const start = useCallback(() => {
     const Ctor = getRecognitionCtor();
     if (!Ctor) return;
 
-    // Always begin from a fresh instance — reusing one across sessions is
-    // unreliable in Chrome and is what breaks the second recording.
-    teardown();
+    // Discard any previous instance first.
+    dispose();
+
+    // Don't let the assistant's own voice output feed into the mic.
+    try {
+      window.speechSynthesis?.cancel();
+    } catch {
+      /* ignore */
+    }
 
     const recognition = new Ctor();
     recognition.lang = langRef.current;
     recognition.continuous = true;
     recognition.interimResults = true;
 
-    manualStopRef.current = false;
     setTranscript("");
     setInterim("");
     setError(null);
@@ -106,26 +109,16 @@ export function useSpeechRecognition(lang = "en-US"): UseSpeechRecognitionResult
       setInterim(interimText);
     };
     recognition.onerror = (event) => {
-      if (event.error === "not-allowed" || event.error === "service-not-allowed") {
-        manualStopRef.current = true;
-        setError(event.error);
-      } else if (event.error !== "no-speech" && event.error !== "aborted") {
+      if (event.error !== "no-speech" && event.error !== "aborted") {
         setError(event.error);
       }
     };
+    // One session ends on manual stop OR when the browser detects silence.
+    // No auto-restart: keeping it simple guarantees the recognizer is reusable.
     recognition.onend = () => {
-      // If the browser ended on its own but the user hasn't stopped, keep going.
-      if (!manualStopRef.current && recognitionRef.current === recognition) {
-        try {
-          recognition.start();
-          return;
-        } catch {
-          /* fall through to stop */
-        }
-      }
+      if (recognitionRef.current === recognition) recognitionRef.current = null;
       setListening(false);
       setInterim("");
-      if (recognitionRef.current === recognition) recognitionRef.current = null;
     };
 
     recognitionRef.current = recognition;
@@ -133,13 +126,12 @@ export function useSpeechRecognition(lang = "en-US"): UseSpeechRecognitionResult
       recognition.start();
       setListening(true);
     } catch {
-      teardown();
+      dispose();
       setListening(false);
     }
-  }, [teardown]);
+  }, [dispose]);
 
   const stop = useCallback(() => {
-    manualStopRef.current = true;
     const recognition = recognitionRef.current;
     if (!recognition) {
       setListening(false);
@@ -148,10 +140,10 @@ export function useSpeechRecognition(lang = "en-US"): UseSpeechRecognitionResult
     try {
       recognition.stop();
     } catch {
-      teardown();
+      dispose();
       setListening(false);
     }
-  }, [teardown]);
+  }, [dispose]);
 
   const reset = useCallback(() => {
     setTranscript("");
@@ -160,11 +152,8 @@ export function useSpeechRecognition(lang = "en-US"): UseSpeechRecognitionResult
   }, []);
 
   useEffect(() => {
-    return () => {
-      manualStopRef.current = true;
-      teardown();
-    };
-  }, [teardown]);
+    return () => dispose();
+  }, [dispose]);
 
   return { supported, listening, transcript, interim, error, start, stop, reset };
 }
