@@ -56,9 +56,79 @@ Main responsibilities:
 - Coordinate translation from one language to another.
 - Coordinate speech-to-text for voice input.
 - Coordinate text-to-speech when a response should be read aloud.
+- Coordinate specialized agents for translation, summarization, and recommendations.
 - Apply accessibility-focused behavior, such as clear responses and support for multiple output formats.
 
 The Business Layer should not be responsible for directly rendering the user interface or storing raw data. Instead, it should receive user requests from the Presentation Layer, request data from the Persistence Layer, apply the required logic, and return structured results.
+
+## Multi-Agent System
+
+The Business Layer can be organized as a multi-agent system. Each agent is responsible for a specific type of user request while sharing the same dataset access and response format.
+
+The multi-agent system should include:
+
+- Translator Agent
+- Summary Agent
+- Recommender Agent
+
+These agents should not replace the layered architecture. Instead, they are internal Business Layer components that help separate the main application logic into focused responsibilities.
+
+### Translator Agent
+
+The Translator Agent handles requests where the user wants information translated from one language to another.
+
+Main responsibilities:
+
+- Detect or receive the source language and target language.
+- Translate place information, summaries, assistant responses, or user-facing text.
+- Preserve the meaning of the original content during translation.
+- Return translated text to the Business Layer so it can be displayed as text or read aloud through voice output.
+
+### Summary Agent
+
+The Summary Agent creates short and understandable summaries of places from the dataset.
+
+Main responsibilities:
+
+- Receive structured place data from the Business Layer.
+- Generate concise summaries using available fields such as name, category, address, borough, activity type, and accessibility details.
+- Avoid unnecessary detail so the summary is easy for users to understand.
+- Return summaries that can be used in map markers, search results, text responses, or voice responses.
+
+### Recommender Agent
+
+The Recommender Agent recommends places based on the user's activity, need, or context.
+
+Main responsibilities:
+
+- Interpret the user's requested activity or need.
+- Match user requests with relevant places from the modeled dataset.
+- Rank or filter places using available information such as category, location, activity type, and accessibility details.
+- Return recommendation results with enough information for the user to compare options.
+
+### Agent Coordination
+
+The Business Layer coordinates the agents and decides which agent should handle each request. Some requests may require more than one agent. For example, a user may ask for recommended places in another language, which requires the Recommender Agent first and then the Translator Agent.
+
+Example flow:
+
+```text
+User request
+     |
+     v
+Business Layer request coordinator
+     |
+     +--> Summary Agent
+     |
+     +--> Translator Agent
+     |
+     +--> Recommender Agent
+     |
+     v
+Unified response for text, voice, and map output
+```
+
+All agents should return structured results to the Business Layer. The Business Layer then prepares the final response for the Presentation Layer, including text output, voice output, translated content, summaries, recommendations, and map results.
 
 ## Text and Voice Interaction Flow
 
@@ -138,7 +208,7 @@ Depending on the implementation, this layer may use a relational database, a doc
 Each layer communicates with adjacent layers only:
 
 - The Presentation Layer sends typed requests, voice requests, and output preferences to the Business Layer.
-- The Business Layer converts voice input into a shared request format, processes requests, and asks the Persistence Layer for data.
+- The Business Layer converts voice input into a shared request format, coordinates the appropriate agent, processes requests, and asks the Persistence Layer for data.
 - The Persistence Layer retrieves and models data from the Database Layer.
 - The Database Layer stores the imported and structured dataset records.
 
@@ -152,9 +222,9 @@ The layered architecture supports the user specifications as follows:
 - Voice communication is captured in the Presentation Layer, converted into text, and processed through the same Business Layer workflow as text input.
 - Interactive map output is displayed in the Presentation Layer using structured place data prepared by the Business Layer.
 - Text and voice outputs are controlled by the Presentation Layer based on responses prepared by the Business Layer.
-- Place summaries are generated in the Business Layer using data from the Persistence Layer.
-- Text translation is coordinated by the Business Layer and displayed in the Presentation Layer.
-- Activity-based recommendations are calculated in the Business Layer using modeled dataset records from the Persistence Layer.
+- Place summaries are generated by the Summary Agent in the Business Layer using data from the Persistence Layer.
+- Text translation is handled by the Translator Agent in the Business Layer and displayed in the Presentation Layer.
+- Activity-based recommendations are calculated by the Recommender Agent in the Business Layer using modeled dataset records from the Persistence Layer.
 
 ## Benefits of the Layered Architecture
 
