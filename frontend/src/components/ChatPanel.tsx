@@ -11,8 +11,10 @@ interface ChatPanelProps {
   busy: boolean;
   recognitionLang: string;
   canSpeak: boolean;
+  speaking: boolean;
   onSend: (text: string, source: "text" | "voice") => void;
   onSpeak: (text: string) => void;
+  onStopSpeaking: () => void;
 }
 
 export function ChatPanel({
@@ -21,8 +23,10 @@ export function ChatPanel({
   busy,
   recognitionLang,
   canSpeak,
+  speaking,
   onSend,
   onSpeak,
+  onStopSpeaking,
 }: ChatPanelProps) {
   const listRef = useRef<HTMLDivElement | null>(null);
 
@@ -45,6 +49,8 @@ export function ChatPanel({
               message={message}
               onSpeak={onSpeak}
               canSpeak={canSpeak}
+              speaking={speaking}
+              onStopSpeaking={onStopSpeaking}
             />
           ))}
         </AnimatePresence>

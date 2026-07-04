@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import type { Place } from "../types";
-import { AccessIcon, ExternalIcon, PinIcon, SpeakerIcon } from "./icons";
+import { AccessIcon, ExternalIcon, PinIcon, SpeakerIcon, StopIcon } from "./icons";
 
 interface PlaceCardProps {
   place: Place;
@@ -9,6 +9,8 @@ interface PlaceCardProps {
   onSelect: (place: Place) => void;
   onSpeak: (text: string) => void;
   canSpeak: boolean;
+  speaking: boolean;
+  onStopSpeaking: () => void;
 }
 
 export function PlaceCard({
@@ -18,6 +20,8 @@ export function PlaceCard({
   onSelect,
   onSpeak,
   canSpeak,
+  speaking,
+  onStopSpeaking,
 }: PlaceCardProps) {
   const summary = place.summary || place.shortSummary || "";
   return (
@@ -71,18 +75,31 @@ export function PlaceCard({
             <PinIcon size={13} /> Show on map
           </button>
         )}
-        {canSpeak && summary && (
-          <button
-            type="button"
-            className="link-btn"
-            onClick={(event) => {
-              event.stopPropagation();
-              onSpeak(`${place.name}. ${summary}`);
-            }}
-          >
-            <SpeakerIcon size={13} /> Listen
-          </button>
-        )}
+        {canSpeak &&
+          summary &&
+          (speaking ? (
+            <button
+              type="button"
+              className="link-btn link-btn--stop"
+              onClick={(event) => {
+                event.stopPropagation();
+                onStopSpeaking();
+              }}
+            >
+              <StopIcon size={13} /> Stop
+            </button>
+          ) : (
+            <button
+              type="button"
+              className="link-btn"
+              onClick={(event) => {
+                event.stopPropagation();
+                onSpeak(`${place.name}. ${summary}`);
+              }}
+            >
+              <SpeakerIcon size={13} /> Listen
+            </button>
+          ))}
         {place.url && (
           <a
             className="link-btn"

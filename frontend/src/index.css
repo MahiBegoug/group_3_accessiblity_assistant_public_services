@@ -200,6 +200,16 @@ a:focus-visible {
   font-weight: 500;
 }
 
+.chip-agent {
+  text-transform: capitalize;
+  padding: 2px 8px;
+  border-radius: 20px;
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+  font-weight: 600;
+  font-size: 11px;
+}
+
 .speak-btn {
   display: inline-flex;
   align-items: center;
@@ -213,6 +223,71 @@ a:focus-visible {
 }
 .speak-btn:hover {
   background: var(--accent-soft);
+}
+.speak-btn--stop {
+  color: var(--danger);
+}
+.speak-btn--stop:hover {
+  background: #fdecec;
+}
+.link-btn--stop {
+  color: var(--danger);
+}
+.link-btn--stop:hover {
+  background: #fdecec;
+}
+
+/* ---------- Speaking bar (stop text-to-speech) ---------- */
+.speaking-bar {
+  position: fixed;
+  left: 50%;
+  bottom: 22px;
+  transform: translateX(-50%);
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 9px 10px 9px 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  box-shadow: var(--shadow-lg);
+}
+.speaking-bar__eq {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  height: 18px;
+}
+.speaking-bar__eq span {
+  width: 3px;
+  height: 16px;
+  border-radius: 3px;
+  background: var(--accent);
+  transform-origin: center;
+}
+.speaking-bar__label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-soft);
+}
+.speaking-bar__stop {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #fff;
+  background: var(--danger);
+  padding: 7px 14px;
+  border-radius: 999px;
+  transition: filter 0.15s ease, transform 0.12s ease;
+}
+.speaking-bar__stop:hover {
+  filter: brightness(0.94);
+}
+.speaking-bar__stop:active {
+  transform: scale(0.96);
 }
 
 /* typing dots */
@@ -270,6 +345,45 @@ a:focus-visible {
   color: var(--accent-strong);
   border-color: transparent;
   transform: translateY(-1px);
+}
+
+/* ---------- Live transcript preview ---------- */
+.transcript-preview {
+  margin: 0 12px 10px;
+  padding: 10px 14px;
+  background: var(--accent-soft);
+  border: 1px solid rgba(47, 109, 246, 0.2);
+  border-radius: 12px;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  overflow: hidden;
+}
+.transcript-preview__dot {
+  flex-shrink: 0;
+  margin-top: 6px;
+  display: inline-grid;
+  place-items: center;
+}
+.transcript-preview__dot span {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--danger);
+  display: block;
+}
+.transcript-preview__text {
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--text);
+}
+.transcript-preview__interim {
+  color: var(--text-soft);
+  font-style: italic;
+}
+.transcript-preview__hint {
+  color: var(--accent-strong);
+  font-weight: 500;
 }
 
 /* ---------- Composer ---------- */

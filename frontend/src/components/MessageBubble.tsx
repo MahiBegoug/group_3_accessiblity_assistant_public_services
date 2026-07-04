@@ -1,14 +1,22 @@
 import { motion } from "framer-motion";
 import type { ChatMessage } from "../types";
-import { SpeakerIcon } from "./icons";
+import { SpeakerIcon, StopIcon } from "./icons";
 
 interface MessageBubbleProps {
   message: ChatMessage;
   onSpeak?: (text: string) => void;
   canSpeak?: boolean;
+  speaking?: boolean;
+  onStopSpeaking?: () => void;
 }
 
-export function MessageBubble({ message, onSpeak, canSpeak }: MessageBubbleProps) {
+export function MessageBubble({
+  message,
+  onSpeak,
+  canSpeak,
+  speaking,
+  onStopSpeaking,
+}: MessageBubbleProps) {
   const isUser = message.role === "user";
   return (
     <motion.div
@@ -32,16 +40,32 @@ export function MessageBubble({ message, onSpeak, canSpeak }: MessageBubbleProps
               {message.intent && (
                 <span className="chip-intent">{message.intent}</span>
               )}
-              {canSpeak && onSpeak && (
-                <button
-                  type="button"
-                  className="speak-btn"
-                  onClick={() => onSpeak(message.text)}
-                  aria-label="Read this response aloud"
-                >
-                  <SpeakerIcon size={13} /> Listen
-                </button>
-              )}
+              {message.agents?.map((agent) => (
+                <span key={agent} className="chip-agent" title="Handled by agent">
+                  {agent}
+                </span>
+              ))}
+              {canSpeak &&
+                onSpeak &&
+                (speaking ? (
+                  <button
+                    type="button"
+                    className="speak-btn speak-btn--stop"
+                    onClick={() => onStopSpeaking?.()}
+                    aria-label="Stop reading aloud"
+                  >
+                    <StopIcon size={13} /> Stop
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    className="speak-btn"
+                    onClick={() => onSpeak(message.text)}
+                    aria-label="Read this response aloud"
+                  >
+                    <SpeakerIcon size={13} /> Listen
+                  </button>
+                ))}
             </div>
           )}
         </>
