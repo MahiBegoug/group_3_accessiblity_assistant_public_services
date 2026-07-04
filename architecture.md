@@ -9,7 +9,7 @@ The application follows a layered architecture divided into four main layers:
 - Persistence Layer
 - Database Layer
 
-This architecture separates the user interface, business logic, data modeling, and data storage concerns. Each layer has a clear responsibility and communicates with the layer directly below or above it.
+This architecture separates the user interface, voice and text interaction, business logic, data modeling, and data storage concerns. Each layer has a clear responsibility and communicates with the layer directly below or above it.
 
 ## Architecture Diagram
 
@@ -17,14 +17,16 @@ This architecture separates the user interface, business logic, data modeling, a
 +--------------------------------------------------+
 |                Presentation Layer                |
 |  User interface, text input, voice input, map UI  |
-|  text output, voice output, translations, results |
+|  text output, voice output, speech controls,      |
+|  translations, summaries, recommendations         |
 +-------------------------+------------------------+
                           |
                           v
 +--------------------------------------------------+
 |                  Business Layer                  |
-|  User specification logic, recommendations,       |
-|  summaries, translation flow, voice processing,   |
+|  Shared request handling for text and voice,      |
+|  recommendations, summaries, translation flow,    |
+|  speech-to-text/text-to-speech coordination,      |
 |  map result preparation, accessibility behavior   |
 +-------------------------+------------------------+
                           |
@@ -47,12 +49,16 @@ This architecture separates the user interface, business logic, data modeling, a
 
 The Presentation Layer is responsible for everything the user interacts with directly. It provides the interface that supports the user specifications, including text communication, voice communication, interactive maps, translated text, summaries, and recommendations.
 
+Text and voice should be treated as equal interaction methods. A user should be able to submit a request by typing or speaking, and the application should be able to return the result as written text, spoken audio, or both.
+
 Main responsibilities:
 
 - Provide a text input interface for users to ask questions or request information.
 - Provide voice input so users can communicate with the assistant by speaking.
+- Provide microphone controls for starting, stopping, and confirming voice input.
 - Display assistant responses as text.
-- Provide voice output so responses can be read aloud.
+- Provide voice output so responses can be read aloud using text-to-speech.
+- Allow users to access the same response content through text and voice formats.
 - Display an interactive map showing relevant places and service locations.
 - Display summaries of places in a clear and accessible format.
 - Display translated text when users request information in another language.
@@ -64,19 +70,47 @@ This layer should focus on usability and accessibility. The interface should sup
 
 The Business Layer contains the main application logic. It connects the user specifications to the features and workflows needed to support them.
 
+The Business Layer should process user intent consistently whether the request started as typed text or spoken voice. Voice input should be converted into text before intent processing, then handled through the same workflow as a typed request. After the response is generated, the Business Layer can prepare the response for text output, voice output, or both.
+
 Main responsibilities:
 
 - Process text requests submitted by the user.
 - Process voice requests after speech is converted to text.
+- Normalize text and voice requests into a shared request format.
 - Determine what the user is asking for, such as a place search, translation, summary, or recommendation.
 - Generate summaries for public places using available dataset information.
 - Prepare recommendation results based on user activities, service categories, or needs.
 - Prepare data for the interactive map, including place names, descriptions, locations, and categories.
 - Coordinate translation from one language to another.
-- Coordinate voice output when a response should be read aloud.
+- Coordinate speech-to-text for voice input.
+- Coordinate text-to-speech when a response should be read aloud.
 - Apply accessibility-focused behavior, such as clear responses and support for multiple output formats.
 
 The Business Layer should not be responsible for directly rendering the user interface or storing raw data. Instead, it should receive user requests from the Presentation Layer, request data from the Persistence Layer, apply the required logic, and return structured results.
+
+## Text and Voice Interaction Flow
+
+Text and voice communication should follow the same core application workflow after input is captured:
+
+```text
+Text input --------------+
+                         |
+                         v
+                  Shared user request
+                         |
+Voice input -> speech-to-text
+                         |
+                         v
+                  Business processing
+                         |
+          +--------------+--------------+
+          |                             |
+          v                             v
+      Text response              Voice response
+                                text-to-speech
+```
+
+This approach prevents the application from having separate business rules for text and voice. The same user intent, recommendation logic, translation logic, summary logic, and map result logic should be reused for both interaction modes.
 
 ## Persistence Layer
 
@@ -131,8 +165,8 @@ Depending on the implementation, this layer may use a relational database, a doc
 
 Each layer communicates with adjacent layers only:
 
-- The Presentation Layer sends user actions and requests to the Business Layer.
-- The Business Layer processes requests and asks the Persistence Layer for data.
+- The Presentation Layer sends typed requests, voice requests, and output preferences to the Business Layer.
+- The Business Layer converts voice input into a shared request format, processes requests, and asks the Persistence Layer for data.
 - The Persistence Layer retrieves and models data from the Database Layer.
 - The Database Layer stores the imported and structured dataset records.
 
@@ -142,10 +176,10 @@ This separation makes the system easier to maintain, test, and extend. For examp
 
 The layered architecture supports the user specifications as follows:
 
-- Text communication is handled by the Presentation Layer and processed by the Business Layer.
-- Voice communication is captured in the Presentation Layer and interpreted through Business Layer logic.
+- Text communication is captured in the Presentation Layer and processed by the Business Layer.
+- Voice communication is captured in the Presentation Layer, converted into text, and processed through the same Business Layer workflow as text input.
 - Interactive map output is displayed in the Presentation Layer using structured place data prepared by the Business Layer.
-- Text and voice outputs are controlled by the Presentation Layer based on responses from the Business Layer.
+- Text and voice outputs are controlled by the Presentation Layer based on responses prepared by the Business Layer.
 - Place summaries are generated in the Business Layer using data from the Persistence Layer.
 - Text translation is coordinated by the Business Layer and displayed in the Presentation Layer.
 - Activity-based recommendations are calculated in the Business Layer using modeled dataset records from the Persistence Layer.
