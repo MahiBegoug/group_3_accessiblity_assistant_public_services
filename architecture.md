@@ -13,15 +13,13 @@ This architecture separates the user interface, voice and text interaction, busi
 
 ## Architecture Diagram
 
-![Layered architecture diagram](C:/Users/Admin/.cursor/projects/c-Users-Admin-dev-group-3-accessiblity-assistant-public-services/assets/c__Users_Admin_AppData_Roaming_Cursor_User_workspaceStorage_empty-window_images_image-a4ea655c-2941-485c-a2f9-652f2741d2f2.png)
+Layered architecture diagram
 
 The diagram shows the application organized into four layers. The Presentation Layer handles user interaction, including text input, voice input, map interaction, text output, and voice output. The Business Layer contains the application logic for user requests, recommendations, summaries, translation, and voice processing. The Persistence Layer models and retrieves the dataset records. The Database Layer stores the structured public service location data.
 
 ## Presentation Layer
 
 The Presentation Layer is responsible for everything the user interacts with directly. It provides the interface that supports the user specifications, including text communication, voice communication, interactive maps, translated text, summaries, and recommendations.
-
-Text and voice should be treated as equal interaction methods. A user should be able to submit a request by typing or speaking, and the application should be able to return the result as written text, spoken audio, or both.
 
 Main responsibilities:
 
@@ -84,6 +82,8 @@ Main responsibilities:
 - Preserve the meaning of the original content during translation.
 - Return translated text to the Business Layer so it can be displayed as text or read aloud through voice output.
 
+
+
 ### Summary Agent
 
 The Summary Agent creates short and understandable summaries of places from the dataset.
@@ -95,6 +95,8 @@ Main responsibilities:
 - Avoid unnecessary detail so the summary is easy for users to understand.
 - Return summaries that can be used in map markers, search results, text responses, or voice responses.
 
+
+
 ### Recommender Agent
 
 The Recommender Agent recommends places based on the user's activity, need, or context.
@@ -105,6 +107,8 @@ Main responsibilities:
 - Match user requests with relevant places from the modeled dataset.
 - Rank or filter places using available information such as category, location, activity type, and accessibility details.
 - Return recommendation results with enough information for the user to compare options.
+
+
 
 ### Agent Coordination
 
@@ -158,7 +162,7 @@ This approach prevents the application from having separate business rules for t
 
 The Persistence Layer manages the application data model and the access logic for the dataset. The application uses the Montreal open dataset for public places and buildings:
 
-https://donnees.montreal.ca/dataset/lieux-batiments-vocation-publique
+[https://donnees.montreal.ca/dataset/lieux-batiments-vocation-publique](https://donnees.montreal.ca/dataset/lieux-batiments-vocation-publique)
 
 The dataset is available as a CSV file and should be modeled into application entities that can be searched, filtered, summarized, translated, and displayed on the map.
 
@@ -233,3 +237,4 @@ The layered architecture supports the user specifications as follows:
 - Easier maintenance because changes in one layer have limited impact on other layers.
 - Better support for accessibility because user interaction features are isolated in the Presentation Layer.
 - Better support for future data changes because dataset parsing and modeling are isolated in the Persistence Layer.
+
