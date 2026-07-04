@@ -47,24 +47,49 @@ export function useSpeechRecognition(lang = "en-US"): UseSpeechRecognitionResult
   const [transcript, setTranscript] = useState("");
   const [interim, setInterim] = useState("");
   const [error, setError] = useState<string | null>(null);
+
   const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
   // The user explicitly asked to stop (vs. the browser auto-ending on silence).
   const manualStopRef = useRef(false);
+  const langRef = useRef(lang);
+  langRef.current = lang;
 
-  useEffect(() => {
+  // Detach handlers and drop the current instance.
+  const teardown = useCallback(() => {
+    const recognition = recognitionRef.current;
+    if (recognition) {
+      recognition.onstart = null;
+      recognition.onresult = null;
+      recognition.onerror = null;
+      recognition.onend = null;
+      try {
+        recognition.abort();
+      } catch {
+        /* ignore */
+      }
+    }
+    recognitionRef.current = null;
+  }, []);
+
+  const start = useCallback(() => {
     const Ctor = getRecognitionCtor();
     if (!Ctor) return;
+
+    // Always begin from a fresh instance — reusing one across sessions is
+    // unreliable in Chrome and is what breaks the second recording.
+    teardown();
+
     const recognition = new Ctor();
-    recognition.lang = lang;
-    // Continuous so it keeps listening until the user stops, giving explicit
-    // start/stop control instead of auto-ending after a short pause.
+    recognition.lang = langRef.current;
     recognition.continuous = true;
     recognition.interimResults = true;
 
-    recognition.onstart = () => {
-      setListening(true);
-      setError(null);
-    };
+    manualStopRef.current = false;
+    setTranscript("");
+    setInterim("");
+    setError(null);
+
+    recognition.onstart = () => setListening(true);
     recognition.onresult = (event) => {
       let finalText = "";
       let interimText = "";
@@ -81,7 +106,6 @@ export function useSpeechRecognition(lang = "en-US"): UseSpeechRecognitionResult
       setInterim(interimText);
     };
     recognition.onerror = (event) => {
-      // Fatal errors: don't try to auto-restart on the following onend.
       if (event.error === "not-allowed" || event.error === "service-not-allowed") {
         manualStopRef.current = true;
         setError(event.error);
@@ -91,7 +115,7 @@ export function useSpeechRecognition(lang = "en-US"): UseSpeechRecognitionResult
     };
     recognition.onend = () => {
       // If the browser ended on its own but the user hasn't stopped, keep going.
-      if (!manualStopRef.current) {
+      if (!manualStopRef.current && recognitionRef.current === recognition) {
         try {
           recognition.start();
           return;
@@ -101,44 +125,46 @@ export function useSpeechRecognition(lang = "en-US"): UseSpeechRecognitionResult
       }
       setListening(false);
       setInterim("");
+      if (recognitionRef.current === recognition) recognitionRef.current = null;
     };
 
     recognitionRef.current = recognition;
-    return () => {
-      recognition.onstart = null;
-      recognition.onresult = null;
-      recognition.onerror = null;
-      recognition.onend = null;
-      manualStopRef.current = true;
-      recognition.abort();
-    };
-  }, [lang]);
-
-  const start = useCallback(() => {
-    const recognition = recognitionRef.current;
-    if (!recognition || listening) return;
-    setTranscript("");
-    setInterim("");
-    setError(null);
-    manualStopRef.current = false;
     try {
       recognition.start();
       setListening(true);
     } catch {
+      teardown();
       setListening(false);
     }
-  }, [listening]);
+  }, [teardown]);
 
   const stop = useCallback(() => {
     manualStopRef.current = true;
-    recognitionRef.current?.stop();
-  }, []);
+    const recognition = recognitionRef.current;
+    if (!recognition) {
+      setListening(false);
+      return;
+    }
+    try {
+      recognition.stop();
+    } catch {
+      teardown();
+      setListening(false);
+    }
+  }, [teardown]);
 
   const reset = useCallback(() => {
     setTranscript("");
     setInterim("");
     setError(null);
   }, []);
+
+  useEffect(() => {
+    return () => {
+      manualStopRef.current = true;
+      teardown();
+    };
+  }, [teardown]);
 
   return { supported, listening, transcript, interim, error, start, stop, reset };
 }
